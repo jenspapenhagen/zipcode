@@ -27,28 +27,19 @@ public class ZipCodeService {
         if (zipCode < LOWEST_ZIPCODE || zipCode > HIGHEST_ZIPCODE) {
             return Optional.empty();
         }
-        final Map<Long, CSVInput> csvInputMap = getLongCSVInputMap();
+        final Map<Long, CSVInput> csvInputMap = readCSV();
         final CSVInput csvInput = csvInputMap.get(zipCode);
 
         return isNull(csvInput) ? Optional.empty() : Optional.of(csvInput);
     }
 
-    /*
-     * map the List of CSVInput into a Map for faster filter
-     */
-    private Map<Long, CSVInput> getLongCSVInputMap() {
-        final List<CSVInput> csvInputs = readCSV();
-        return csvInputs.stream()
-                .collect(Collectors.toMap(CSVInput::getZipCode, Function.identity()));
-    }
-
     @CacheResult(cacheName = "zipcode-cache")
-    public List<CSVInput> readCSV() {
+    public Map<Long, CSVInput> readCSV() {
         try {
             //read the csv
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(PATH_TO_CSV);
             if (isNull(inputStream)) {
-                return Collections.emptyList();
+                return Collections.emptyMap();
             }
             final String readFile = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -62,12 +53,13 @@ public class ZipCodeService {
                             .lon(Double.parseDouble(split[2].replaceAll("\"", "")))
                             .lat(Double.parseDouble(split[3].replaceAll("\"", "")))
                             .build())
-                    .collect(Collectors.toList());
+                    //map the List of CSVInput into a Map for faster filter
+                    .collect(Collectors.toMap(CSVInput::getZipCode, Function.identity()));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return Collections.emptyList();
+        return Collections.emptyMap();
     }
 
 }
