@@ -56,6 +56,7 @@ public class ZipCodeService {
                     //map the List of CSVInput into a Map for faster filter
                     .collect(Collectors.toMap(CSVInput::getZipCode, Function.identity()));
         } catch (IOException e) {
+            log.error("IOException on reading the csv file");
             e.printStackTrace();
         }
 
